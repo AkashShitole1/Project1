@@ -43,17 +43,17 @@ export function setAuthToken(token: string | null) {
 export async function getAppConfig(): Promise<AppConfig> {
   const baseUrl = import.meta.env.BASE_URL || '/';
 
-  // 1) Preferred: backend-provided config when available.
+  // 1) Preferred for gateway/static deployments: public/config.json at app base path.
   try {
-    const res = await api.get('config', { baseURL: '/api' });
+    const res = await axios.get('config.json', { baseURL: baseUrl, timeout: 5000 });
     return normalizeAppConfig(res.data);
   } catch {
     // Ignore and continue fallback chain.
   }
 
-  // 2) Static runtime config from public/config.json (works behind gateway subpaths).
+  // 2) Backend-provided config when available.
   try {
-    const res = await axios.get('config.json', { baseURL: baseUrl, timeout: 5000 });
+    const res = await api.get('config', { baseURL: '/api' });
     return normalizeAppConfig(res.data);
   } catch {
     // Ignore and continue fallback chain.
