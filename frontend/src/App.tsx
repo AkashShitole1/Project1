@@ -20,10 +20,13 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import CallbackPage from './pages/CallbackPage';
 
 export default function App() {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const routerBase = baseUrl.endsWith('/') && baseUrl.length > 1 ? baseUrl.slice(0, -1) : baseUrl;
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <BrowserRouter basename={routerBase}>
         <AuthProvider>
           <Routes>
             <Route path="/callback" element={<CallbackPage />} />
@@ -46,4 +49,5 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
 
