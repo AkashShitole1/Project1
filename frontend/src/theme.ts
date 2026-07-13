@@ -36,7 +36,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: { fontWeight: 700 },
     h2: { fontWeight: 700 },
     h3: { fontWeight: 600 },
@@ -84,7 +84,7 @@ const theme = createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: 'Consolas, "Courier New", monospace',
           fontSize: '0.75rem',
         },
       },
@@ -146,4 +146,3 @@ const theme = createTheme({
 });
 
 export default theme;
-

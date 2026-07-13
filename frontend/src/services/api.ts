@@ -6,6 +6,31 @@ const api = axios.create({
   timeout: 15000,
 });
 
+const DEFAULT_APP_CONFIG: AppConfig = {
+  // Safe fallback for static deployments without backend config endpoint.
+  mockMode: true,
+  oidcIssuer: '',
+  oidcClientId: '',
+  oidcRedirectUri: '',
+  oidcScopes: 'openid profile email',
+  iamBaseUrl: '',
+};
+
+function normalizeAppConfig(raw: Partial<AppConfig> | Record<string, unknown> | undefined): AppConfig {
+  const data = (raw || {}) as Record<string, unknown>;
+  const envMockMode = import.meta.env.VITE_MOCK_MODE === 'true';
+  const mockMode = typeof data.mockMode === 'boolean' ? (data.mockMode as boolean) : envMockMode || DEFAULT_APP_CONFIG.mockMode;
+
+  return {
+    mockMode,
+    oidcIssuer: (data.oidcIssuer as string) || (import.meta.env.VITE_OIDC_ISSUER as string) || DEFAULT_APP_CONFIG.oidcIssuer,
+    oidcClientId: (data.oidcClientId as string) || (import.meta.env.VITE_OIDC_CLIENT_ID as string) || DEFAULT_APP_CONFIG.oidcClientId,
+    oidcRedirectUri: (data.oidcRedirectUri as string) || (import.meta.env.VITE_OIDC_REDIRECT_URI as string) || DEFAULT_APP_CONFIG.oidcRedirectUri,
+    oidcScopes: (data.oidcScopes as string) || (import.meta.env.VITE_OIDC_SCOPES as string) || DEFAULT_APP_CONFIG.oidcScopes,
+    iamBaseUrl: (data.iamBaseUrl as string) || (import.meta.env.VITE_IAM_BASE_URL as string) || DEFAULT_APP_CONFIG.iamBaseUrl,
+  };
+}
+
 // Set auth token for all requests
 export function setAuthToken(token: string | null) {
   if (token) {
@@ -16,8 +41,26 @@ export function setAuthToken(token: string | null) {
 }
 
 export async function getAppConfig(): Promise<AppConfig> {
-  const res = await api.get('/config', { baseURL: '/' });
-  return res.data;
+  const baseUrl = import.meta.env.BASE_URL || '/';
+
+  // 1) Preferred: backend-provided config when available.
+  try {
+    const res = await api.get('config', { baseURL: '/api' });
+    return normalizeAppConfig(res.data);
+  } catch {
+    // Ignore and continue fallback chain.
+  }
+
+  // 2) Static runtime config from public/config.json (works behind gateway subpaths).
+  try {
+    const res = await axios.get('config.json', { baseURL: baseUrl, timeout: 5000 });
+    return normalizeAppConfig(res.data);
+  } catch {
+    // Ignore and continue fallback chain.
+  }
+
+  // 3) Last fallback: environment defaults (no throw, keeps app booting).
+  return normalizeAppConfig(undefined);
 }
 
 export async function getTokenInfo(rawToken?: string): Promise<TokenInfo> {
@@ -100,4 +143,3 @@ export async function checkHealth(): Promise<{ status: string; mode: string }> {
 }
 
 export default api;
-

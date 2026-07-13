@@ -1,0 +1,9 @@
+{
+  "mockMode": true,
+  "oidcIssuer": "",
+  "oidcClientId": "",
+  "oidcRedirectUri": "",
+  "oidcScopes": "openid profile email",
+  "iamBaseUrl": ""
+}
+
