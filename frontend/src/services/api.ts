@@ -16,6 +16,18 @@ const DEFAULT_APP_CONFIG: AppConfig = {
   iamBaseUrl: '',
 };
 
+function resolveConfigUrlFromLocation(): URL {
+  const { origin, pathname, href } = window.location;
+  const segments = pathname.split('/').filter(Boolean);
+
+  // For gateway deployments like /app12345-logt1dev/, always anchor to app root.
+  if (segments.length > 0) {
+    return new URL('config.json', `${origin}/${segments[0]}/`);
+  }
+
+  return new URL('config.json', href);
+}
+
 function normalizeAppConfig(raw: Partial<AppConfig> | Record<string, unknown> | undefined): AppConfig {
   const data = (raw || {}) as Record<string, unknown>;
   const envMockMode = import.meta.env.VITE_MOCK_MODE === 'true';
@@ -41,26 +53,19 @@ export function setAuthToken(token: string | null) {
 }
 
 export async function getAppConfig(): Promise<AppConfig> {
-  const baseUrl = import.meta.env.BASE_URL || '/';
+  console.info('[CONFIG] Loading config');
 
-  // 1) Preferred for gateway/static deployments: public/config.json at app base path.
   try {
-    const res = await axios.get('config.json', { baseURL: baseUrl, timeout: 5000 });
+    const configUrl = resolveConfigUrlFromLocation();
+    const res = await axios.get(configUrl.toString(), { timeout: 5000 });
+    console.info('[CONFIG] Config loaded');
     return normalizeAppConfig(res.data);
-  } catch {
-    // Ignore and continue fallback chain.
+  } catch (error) {
+    console.warn('[CONFIG] Config failed', error);
   }
 
-  // 2) Backend-provided config when available.
-  try {
-    const res = await api.get('config', { baseURL: '/api' });
-    return normalizeAppConfig(res.data);
-  } catch {
-    // Ignore and continue fallback chain.
-  }
-
-  // 3) Last fallback: environment defaults (no throw, keeps app booting).
-  return normalizeAppConfig(undefined);
+  console.info('[MOCK] Using mock configuration');
+  return normalizeAppConfig({ mockMode: true });
 }
 
 export async function getTokenInfo(rawToken?: string): Promise<TokenInfo> {
