@@ -19,9 +19,25 @@ const DEFAULT_APP_CONFIG: AppConfig = {
 function resolveConfigUrlFromLocation(): URL {
   const { origin, pathname, href } = window.location;
   const segments = pathname.split('/').filter(Boolean);
+  const appRoutes = new Set([
+    'login',
+    'callback',
+    'token',
+    'user',
+    'roles',
+    'scopes',
+    'groups',
+    'oauth-client',
+    'idp',
+    'tech-users',
+    'token-exchange',
+    'trust-explorer',
+    'subscription',
+  ]);
 
-  // For gateway deployments like /app12345-logt1dev/, always anchor to app root.
-  if (segments.length > 0) {
+  // For gateway deployments like /app12345-logt1dev/, anchor to that app root.
+  // For local routes like /login, do not treat route segment as deployment base.
+  if (segments.length > 0 && !appRoutes.has(segments[0])) {
     return new URL('config.json', `${origin}/${segments[0]}/`);
   }
 

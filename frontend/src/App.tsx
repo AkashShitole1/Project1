@@ -20,8 +20,25 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import CallbackPage from './pages/CallbackPage';
 
 export default function App() {
-  const baseUrl = import.meta.env.BASE_URL || '/';
-  const routerBase = baseUrl.endsWith('/') && baseUrl.length > 1 ? baseUrl.slice(0, -1) : baseUrl;
+  const pathnameSegments = window.location.pathname.split('/').filter(Boolean);
+  const appRoutes = new Set([
+    'login',
+    'callback',
+    'token',
+    'user',
+    'roles',
+    'scopes',
+    'groups',
+    'oauth-client',
+    'idp',
+    'tech-users',
+    'token-exchange',
+    'trust-explorer',
+    'subscription',
+  ]);
+  const routerBase = pathnameSegments.length > 0 && !appRoutes.has(pathnameSegments[0])
+    ? `/${pathnameSegments[0]}`
+    : '/';
 
   return (
     <ThemeProvider theme={theme}>
